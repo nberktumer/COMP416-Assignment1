@@ -33,6 +33,116 @@ public class DataSyncWorker extends Thread {
     }
 
     private void checkFiles() {
+        List<String> masterChecksumList = new ArrayList<>(Arrays.asList(ClientManager.getInstance().getCommandClient().send(Constants.GET_FILE_LIST).split("\\|")));
+        if(masterChecksumList.size() == 1 && masterChecksumList.get(0).equals(""))
+            masterChecksumList.clear();
+
+        for (String checksum : masterChecksumList) {
+            System.out.println(checksum + ", asdasd");
+            if (!checksumMap.values().contains(checksum)) {
+                // TODO: Download file
+                ClientManager.getInstance().getDataClient().requestFile(checksum);
+                File file = FileUtils.getFileWithChecksum(checksum, FileUtils.getFileList(FileUtils.getDriveDirectory()));
+                if (file != null) {
+                    checksumMap.put(file.getAbsolutePath(), checksum);
+                }
+            }
+        }
+
+        List<String> removeList = new ArrayList<>();
+        for (String checksum : checksumMap.values()) {
+            if (!masterChecksumList.contains(checksum)) {
+                // TODO: Delete file
+                File file = FileUtils.getFileWithChecksum(checksum, FileUtils.getFileList(FileUtils.getDriveDirectory()));
+                if (file != null) {
+                    file.delete();
+                    removeList.add(file.getAbsolutePath());
+                }
+            }
+        }
+
+        for(String path: removeList) {
+            checksumMap.remove(path);
+        }
+
+        File[] localFileList = FileUtils.getFileList(FileUtils.getDriveDirectory());
+
+        for (File file : localFileList) {
+            // New File
+            if (!checksumMap.containsKey(file.getAbsolutePath())) {
+                checksumMap.put(file.getAbsolutePath(), FileUtils.MD5checksum(file));
+
+                //TODO: Upload new file
+                uploadFile(file);
+
+            } else if (checksumMap.containsKey(file.getAbsolutePath()) && !checksumMap.get(file.getAbsolutePath()).equals(FileUtils.MD5checksum(file))) {
+                checksumMap.put(file.getAbsolutePath(), FileUtils.MD5checksum(file));
+
+                //TODO: Update file
+                uploadFile(file);
+            }
+        }
+
+        List<String> deletedFiles = new ArrayList<>();
+        for (String path : checksumMap.keySet()) {
+            File file = new File(path);
+            String checksum = checksumMap.get(path);
+
+            if (!file.exists()) {
+                deletedFiles.add(file.getAbsolutePath());
+                //TODO: Delete file from master
+                ClientManager.getInstance().getCommandClient().send(Constants.DELETE_FILE + "|" + checksum);
+            }
+        }
+
+        for (String path : deletedFiles) {
+            checksumMap.remove(path);
+        }
+
+
+/*************************/
+/*
+
+List<String> fileDeleteExceptionList = new ArrayList<>();
+        // Compare the current and previous checksum lists
+        for (String checksum : prevChecksumList) {
+            if (!masterChecksumList.contains(checksum))
+                fileDeleteExceptionList.add(checksum);
+        }
+
+        for (String checksum : masterChecksumList) {
+            File file = FileUtils.getFileWithChecksum(checksum, localFileList);
+        }
+
+        for (File file : localFileList) {
+            String fileChecksum = FileUtils.MD5checksum(file);
+
+            // Upload new file to the master
+            if (!masterChecksumList.contains(fileChecksum)) {
+                uploadFile(file);
+            }
+        }
+
+        masterChecksumList = new ArrayList<>(Arrays.asList(ClientManager.getInstance().getCommandClient().send(Constants.GET_FILE_LIST).split("\\|")));
+        List<String> tempMasterChecksumList = new ArrayList<>(masterChecksumList);
+        for (File file : localFileList) {
+            tempMasterChecksumList.remove(FileUtils.MD5checksum(file));
+        }
+
+
+        for (String checksum : tempMasterChecksumList) {
+            ClientManager.getInstance().getDataClient().requestFile(checksum);
+        }
+
+
+        prevChecksumList.clear();
+        prevChecksumList.addAll(masterChecksumList);
+
+/*
+
+
+
+
         // Get checksum list from master
         List<String> tempChecksumList = Arrays.asList(ClientManager.getInstance().getCommandClient().send(Constants.GET_FILE_LIST).split("\\|"));
         List<String> checksumList = new ArrayList<>(tempChecksumList);
@@ -44,8 +154,6 @@ public class DataSyncWorker extends Thread {
             if(!checksumList.contains(checksum))
                 fileDeleteExceptionList.add(checksum);
         }
-
-        File[] fileList = FileUtils.getFileList(FileUtils.getDriveDirectory());
 
         // Check deleted files
         for (String filePath : checksumMap.keySet()) {
@@ -59,8 +167,7 @@ public class DataSyncWorker extends Thread {
             }
         }
 
-        // Refresh the file list in the drive directory
-        fileList = FileUtils.getFileList(FileUtils.getDriveDirectory());
+        File[] fileList = FileUtils.getFileList(FileUtils.getDriveDirectory());
 
         // Check new files and fileList content changes
         for (File file : fileList) {
@@ -107,7 +214,7 @@ public class DataSyncWorker extends Thread {
         }
 
         prevChecksumList.clear();
-        prevChecksumList.addAll(tempChecksumList);
+        prevChecksumList.addAll(tempChecksumList);*/
     }
 
     @Override

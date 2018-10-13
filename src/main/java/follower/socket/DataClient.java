@@ -14,9 +14,9 @@ public class DataClient extends Client {
 
     public File requestFile(String fileChecksum) {
         try {
-            System.out.println("File checsum: " + fileChecksum);
             String fileName = ClientManager.getInstance().getCommandClient().send(Constants.REQUEST_FILE_NAME + "|" + fileChecksum);
 
+            System.out.println("DataClient: " + fileName + " will be downloaded from the master");
 
             boolean isReceived = false;
             do {
@@ -33,12 +33,9 @@ public class DataClient extends Client {
                 }
                 fileOutputStream.close();
 
-                System.out.println("DataClient: File transfer completed at " + System.currentTimeMillis());
+                System.out.println("DataClient: "+fileName+" is downloaded at " + System.currentTimeMillis());
 
                 File receivedFile = new File(FileUtils.getDriveDirectory(), fileName);
-
-                System.out.println(fileChecksum + ", " + FileUtils.MD5checksum(receivedFile));
-
 
                 if (receivedFile.exists() && FileUtils.MD5checksum(receivedFile).equals(fileChecksum)) {
                     System.out.println("Successfully received the file");
@@ -59,8 +56,13 @@ public class DataClient extends Client {
     public boolean transfer(File file) {
         try {
             String result;
-
+            int counter = 0;
             do {
+                if(counter > Constants.NUM_TRIALS)
+                    throw new Exception();
+
+                System.out.println(file.getName() + ", " + FileUtils.MD5checksum(file));
+
                 ClientManager.getInstance().getCommandClient().send(Constants.NEW_FILE + "|" + file.getName() + "|" + FileUtils.MD5checksum(file));
 
                 final BufferedOutputStream outputFileStream = new BufferedOutputStream(getSocket().getOutputStream());
@@ -77,6 +79,7 @@ public class DataClient extends Client {
                 result = getInputStream().readLine();
 
                 inputFileStream.close();
+                counter++;
             } while (!result.equals(Constants.SUCCESS));
 
             return true;

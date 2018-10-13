@@ -57,13 +57,12 @@ public class CommandServerThread extends ServerThread {
                     String checksum = commandArr[1];
 
                     File file = FileUtils.getFileWithChecksum(checksum, FileUtils.getFileList(FileUtils.getDebugDriveDirectory()));
-                    if (file != null && file.exists())
-                        if (file.delete())
-                            getOutputStream().println(Constants.SUCCESS);
-                        else
-                            getOutputStream().println(Constants.ERROR);
-                    else
+                    if (file != null && file.exists()) {
+                        file.delete();
+                        getOutputStream().println(Constants.SUCCESS);
+                    } else {
                         getOutputStream().println(Constants.ERROR);
+                    }
                     getOutputStream().flush();
                 } else if (command.equals(Constants.GET_FILE_LIST)) {
                     String out = String.join("|", FileUtils.getChecksumList(FileUtils.getFileList(FileUtils.getDebugDriveDirectory())));
@@ -81,7 +80,6 @@ public class CommandServerThread extends ServerThread {
                 } else if (command.equals(Constants.REQUEST_FILE)) {
                     String checksum = commandArr[1];
                     File file = FileUtils.getFileWithChecksum(checksum, FileUtils.getFileList(FileUtils.getDebugDriveDirectory()));
-                    System.out.println(file.getName() + " will be sent. Checsum: " + checksum);
 
                     if (file == null) {
                         System.out.println("file does not exist!!!");
@@ -89,6 +87,7 @@ public class CommandServerThread extends ServerThread {
                         getOutputStream().flush();
                         continue;
                     }
+                    System.out.println(file.getName() + " will be sent. Checsum: " + checksum);
 
                     OutputStream dataThreadOutputStream = MasterValues.getThreadContainerMap().get(getSocket().getInetAddress()).getDataServerThread().getSocket().getOutputStream();
                     final BufferedOutputStream outputFileStream = new BufferedOutputStream(dataThreadOutputStream);
@@ -115,8 +114,9 @@ public class CommandServerThread extends ServerThread {
             String line = this.getName();
             System.err.println("Server Thread: Run. IO Error/ Client " + line + " terminated abruptly");
         } catch (NullPointerException e) {
+            e.printStackTrace();
             String line = this.getName();
-            System.err.println("Server Thread: Run.Client " + line + " Closed");
+            System.err.println("Server Thread:  " + line + " Closed");
         }
     }
 }
