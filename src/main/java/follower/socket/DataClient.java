@@ -22,6 +22,7 @@ public class DataClient extends Client {
             do {
                 ClientManager.getInstance().getCommandClient().getOutputStream().println(Constants.REQUEST_FILE + "|" + fileChecksum);
                 ClientManager.getInstance().getCommandClient().getOutputStream().flush();
+                getSocket().setSendBufferSize(1024000);
                 final BufferedInputStream inputFileStream = new BufferedInputStream(getSocket().getInputStream());
                 FileOutputStream fileOutputStream = new FileOutputStream(new File(FileUtils.getDriveDirectory(), fileName));
 
