@@ -35,10 +35,11 @@ public class CommandServerThread extends ServerThread {
             while ((line = getInputStream().readLine()) != null) {
                 String[] commandArr = line.split("\\|");
 
+                System.out.println(line);
+
                 String command = commandArr[0];
 
                 System.out.println(command);
-
                 if (command.equals(Constants.NEW_FILE)) {
                     String fileName = commandArr[1];
                     String fileChecksum = commandArr[2];
@@ -65,7 +66,8 @@ public class CommandServerThread extends ServerThread {
                         getOutputStream().println(Constants.ERROR);
                     getOutputStream().flush();
                 } else if (command.equals(Constants.GET_FILE_LIST)) {
-                    getOutputStream().println(String.join("|", FileUtils.getChecksumList(FileUtils.getFileList(FileUtils.getDebugDriveDirectory()))));
+                    String out = String.join("|", FileUtils.getChecksumList(FileUtils.getFileList(FileUtils.getDebugDriveDirectory())));
+                    getOutputStream().println(out);
                     getOutputStream().flush();
                 } else if (command.equals(Constants.REQUEST_FILE_NAME)) {
                     String checksum = commandArr[1];
