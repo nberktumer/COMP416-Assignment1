@@ -15,6 +15,8 @@ public class DataClient extends Client {
     public File requestFile(String fileChecksum) {
         try {
             String fileName = ClientManager.getInstance().getCommandClient().send(Constants.REQUEST_FILE_NAME + "|" + fileChecksum);
+            if(fileName.equals(Constants.ERROR))
+                return null;
 
             System.out.println("DataClient: " + fileName + " will be downloaded from the master");
 

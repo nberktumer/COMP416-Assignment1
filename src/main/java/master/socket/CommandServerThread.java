@@ -75,7 +75,7 @@ public class CommandServerThread extends ServerThread {
                     if (file != null)
                         getOutputStream().println(file.getName());
                     else
-                        getOutputStream().println("null");
+                        getOutputStream().println(Constants.ERROR);
                     getOutputStream().flush();
                 } else if (command.equals(Constants.REQUEST_FILE)) {
                     String checksum = commandArr[1];

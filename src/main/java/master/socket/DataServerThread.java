@@ -47,6 +47,7 @@ public class DataServerThread extends ServerThread {
 
                 System.out.println("DataServerThread: " + fileName);
                 System.out.println("DataServerThread: " + checksum);
+                getSocket().setSendBufferSize(1024000);
                 final BufferedInputStream inputFileStream = new BufferedInputStream(getSocket().getInputStream());
                 FileOutputStream f = new FileOutputStream(new File(FileUtils.getDebugDriveDirectory(), fileName));
 

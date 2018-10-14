@@ -38,7 +38,6 @@ public class DataSyncWorker extends Thread {
             masterChecksumList.clear();
 
         for (String checksum : masterChecksumList) {
-            System.out.println(checksum + ", asdasd");
             if (!checksumMap.values().contains(checksum)) {
                 // TODO: Download file
                 ClientManager.getInstance().getDataClient().requestFile(checksum);
