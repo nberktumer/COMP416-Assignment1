@@ -11,6 +11,7 @@ public class CommandServerThread extends ServerThread {
 
     protected String fileName;
     protected String fileCheckSum;
+    protected long fileLength;
 
     /**
      * Creates a server thread on the input socket
@@ -43,11 +44,14 @@ public class CommandServerThread extends ServerThread {
                 if (command.equals(Constants.NEW_FILE)) {
                     String fileName = commandArr[1];
                     String fileChecksum = commandArr[2];
+                    long fileLength = Long.parseLong(commandArr[3]);
 
                     System.out.println("fileName: " + fileName);
                     System.out.println("checksum: " + fileChecksum);
+                    System.out.println("length: " + fileLength);
                     this.fileCheckSum = fileChecksum;
                     this.fileName = fileName;
+                    this.fileLength = fileLength;
 
                     getOutputStream().println(Constants.SUCCESS);
                     getOutputStream().flush();
@@ -68,14 +72,14 @@ public class CommandServerThread extends ServerThread {
                     String out = String.join("|", FileUtils.getChecksumList(FileUtils.getFileList(FileUtils.getDebugDriveDirectory())));
                     getOutputStream().println(out);
                     getOutputStream().flush();
-                } else if (command.equals(Constants.REQUEST_FILE_NAME)) {
+                } else if (command.equals(Constants.REQUEST_FILE_INFO)) {
                     String checksum = commandArr[1];
 
                     File file = FileUtils.getFileWithChecksum(checksum, FileUtils.getFileList(FileUtils.getDebugDriveDirectory()));
                     if (file != null)
-                        getOutputStream().println(file.getName());
+                        getOutputStream().println(file.getName() + "|" + file.length());
                     else
-                        getOutputStream().println(Constants.ERROR);
+                        getOutputStream().println(Constants.ERROR + "|0");
                     getOutputStream().flush();
                 } else if (command.equals(Constants.REQUEST_FILE)) {
                     String checksum = commandArr[1];

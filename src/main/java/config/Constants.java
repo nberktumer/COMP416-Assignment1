@@ -15,6 +15,6 @@ public class Constants {
     public static final String GET_FILE_LIST = "get_file_list";
     public static final String DELETE_FILE = "delete_file";
     public static final String NEW_FILE = "new_file";
-    public static final String REQUEST_FILE_NAME = "request_file_name";
+    public static final String REQUEST_FILE_INFO = "request_file_info";
     public static final String REQUEST_FILE = "request_file";
 }

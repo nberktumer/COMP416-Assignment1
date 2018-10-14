@@ -5,6 +5,7 @@ import follower.ClientManager;
 import util.FileUtils;
 
 import java.io.*;
+import java.util.Collections;
 
 public class DataClient extends Client {
 
@@ -14,7 +15,9 @@ public class DataClient extends Client {
 
     public File requestFile(String fileChecksum) {
         try {
-            String fileName = ClientManager.getInstance().getCommandClient().send(Constants.REQUEST_FILE_NAME + "|" + fileChecksum);
+            String[] fileInfoArr = ClientManager.getInstance().getCommandClient().send(Constants.REQUEST_FILE_INFO + "|" + fileChecksum).split("\\|");
+            String fileName = fileInfoArr[0];
+            long fileLength = Long.parseLong(fileInfoArr[1]);
             if(fileName.equals(Constants.ERROR))
                 return null;
 
@@ -24,22 +27,18 @@ public class DataClient extends Client {
             do {
                 ClientManager.getInstance().getCommandClient().getOutputStream().println(Constants.REQUEST_FILE + "|" + fileChecksum);
                 ClientManager.getInstance().getCommandClient().getOutputStream().flush();
-                getSocket().setSendBufferSize(1024000);
-                final BufferedInputStream inputFileStream = new BufferedInputStream(getSocket().getInputStream());
-                FileOutputStream fileOutputStream = new FileOutputStream(new File(FileUtils.getDriveDirectory(), fileName));
 
-                byte[] buffer = new byte[Constants.BUFFER_SIZE];
-                int current;
-                while (inputFileStream.available() > 0) {
-                    current = inputFileStream.read(buffer);
-                    fileOutputStream.write(buffer, 0, current);
-                }
-                fileOutputStream.close();
+                final BufferedInputStream inputFileStream = new BufferedInputStream(getSocket().getInputStream());
+                BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(new File(FileUtils.getDriveDirectory(), fileName)));
+
+                for(int i = 0; i < fileLength; i++)
+                    bufferedOutputStream.write(inputFileStream.read());
+
+                bufferedOutputStream.close();
 
                 System.out.println("DataClient: "+fileName+" is downloaded at " + System.currentTimeMillis());
 
                 File receivedFile = new File(FileUtils.getDriveDirectory(), fileName);
-
                 if (receivedFile.exists() && FileUtils.MD5checksum(receivedFile).equals(fileChecksum)) {
                     System.out.println("Successfully received the file");
                     isReceived = true;
@@ -64,24 +63,21 @@ public class DataClient extends Client {
                 if(counter > Constants.NUM_TRIALS)
                     throw new Exception();
 
-                System.out.println(file.getName() + ", " + FileUtils.MD5checksum(file));
+                ClientManager.getInstance().getCommandClient().send(Constants.NEW_FILE + "|" + file.getName() + "|" + FileUtils.MD5checksum(file) + "|" + file.length());
 
-                ClientManager.getInstance().getCommandClient().send(Constants.NEW_FILE + "|" + file.getName() + "|" + FileUtils.MD5checksum(file));
-
-                final BufferedOutputStream outputFileStream = new BufferedOutputStream(getSocket().getOutputStream());
+                final DataOutputStream outputFileStream = new DataOutputStream(new BufferedOutputStream(getSocket().getOutputStream()));
                 final BufferedInputStream inputFileStream = new BufferedInputStream(new FileInputStream(file));
-                final byte[] buffer = new byte[Constants.BUFFER_SIZE];
 
-                for (int read = inputFileStream.read(buffer); read >= 0; read = inputFileStream.read(buffer)) {
-                    outputFileStream.write(buffer, 0, read);
-                }
+                int data;
+                while((data = inputFileStream.read()) != -1)
+                    outputFileStream.write(data);
 
+                inputFileStream.close();
                 outputFileStream.flush();
-                System.out.println("Client: File sent at " + System.currentTimeMillis());
 
                 result = getInputStream().readLine();
 
-                inputFileStream.close();
+                System.out.println("Client: File sent at " + System.currentTimeMillis());
                 counter++;
             } while (!result.equals(Constants.SUCCESS));
 
