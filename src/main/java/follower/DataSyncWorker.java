@@ -44,7 +44,7 @@ public class DataSyncWorker extends Thread {
 
         List<String> downloadList = new ArrayList<>();
         for (String checksum : masterChecksumList) {
-            if (!tempChecksumMap.values().contains(checksum)) {
+            if (!tempChecksumMap.values().contains(checksum) && FileUtils.getFileWithChecksum(checksum, FileUtils.getFileList(FileUtils.getDriveDirectory())) == null) {
                 // Download file
                 String[] fileInfoArr = ClientManager.getInstance().getCommandClient().send(Constants.REQUEST_FILE_INFO + "|" + checksum).split("\\|");
                 String fileName = fileInfoArr[0];
@@ -59,9 +59,13 @@ public class DataSyncWorker extends Thread {
                     downloadList.add(fileName);
                 }
             }
+            File file;
+            if((file = FileUtils.getFileWithChecksum(checksum, FileUtils.getFileList(FileUtils.getDriveDirectory()))) != null)
+                tempChecksumMap.put(file.getAbsolutePath(), checksum);
         }
 
         List<String> removeList = new ArrayList<>();
+        List<String> deleteList = new ArrayList<>();
         for (String checksum : tempChecksumMap.values()) {
             if (!masterChecksumList.contains(checksum)) {
                 // Delete file
@@ -73,6 +77,7 @@ public class DataSyncWorker extends Thread {
                     }
                     System.out.println("-" + file.getName() + " going to be deleted from the computer. Size: " + file.length());
                     removeList.add(file.getAbsolutePath());
+                    deleteList.add(file.getName());
                 }
             }
         }
@@ -84,7 +89,7 @@ public class DataSyncWorker extends Thread {
         File[] localFileList = FileUtils.getFileList(FileUtils.getDriveDirectory());
 
         for (File file : localFileList) {
-            if (!tempChecksumMap.containsKey(file.getAbsolutePath()) && !downloadList.contains(file.getName()) && !removeList.contains(file.getName())) {
+            if (!tempChecksumMap.containsKey(file.getAbsolutePath()) && !downloadList.contains(file.getName()) && !deleteList.contains(file.getName())) {
                 tempChecksumMap.put(file.getAbsolutePath(), FileUtils.MD5checksum(file));
 
                 // Upload new file
@@ -94,7 +99,7 @@ public class DataSyncWorker extends Thread {
                 }
                 System.out.println("-" + file.getName() + " going to be uploaded to the master. Size: " + file.length());
 
-            } else if (tempChecksumMap.containsKey(file.getAbsolutePath()) && !tempChecksumMap.get(file.getAbsolutePath()).equals(FileUtils.MD5checksum(file)) && !downloadList.contains(file.getName()) && !removeList.contains(file.getName())) {
+            } else if (tempChecksumMap.containsKey(file.getAbsolutePath()) && !tempChecksumMap.get(file.getAbsolutePath()).equals(FileUtils.MD5checksum(file)) && !downloadList.contains(file.getName()) && !deleteList.contains(file.getName())) {
                 tempChecksumMap.put(file.getAbsolutePath(), FileUtils.MD5checksum(file));
 
                 // Update file
@@ -130,14 +135,13 @@ public class DataSyncWorker extends Thread {
      */
     private void checkAndSyncFileDifferences(List<String> masterChecksumList) {
         for (String checksum : masterChecksumList) {
-            if (!checksumMap.values().contains(checksum)) {
+            if (!checksumMap.values().contains(checksum) && FileUtils.getFileWithChecksum(checksum, FileUtils.getFileList(FileUtils.getDriveDirectory())) == null) {
                 // Download file
                 ClientManager.getInstance().getDataClient().requestFile(checksum);
-                File file = FileUtils.getFileWithChecksum(checksum, FileUtils.getFileList(FileUtils.getDriveDirectory()));
-                if (file != null) {
-                    checksumMap.put(file.getAbsolutePath(), checksum);
-                }
             }
+            File file;
+            if((file = FileUtils.getFileWithChecksum(checksum, FileUtils.getFileList(FileUtils.getDriveDirectory()))) != null)
+                checksumMap.put(file.getAbsolutePath(), checksum);
         }
 
         List<String> removeList = new ArrayList<>();
