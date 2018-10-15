@@ -60,7 +60,7 @@ public class DataSyncWorker extends Thread {
                 }
             }
             File file;
-            if((file = FileUtils.getFileWithChecksum(checksum, FileUtils.getFileList(FileUtils.getDriveDirectory()))) != null)
+            if ((file = FileUtils.getFileWithChecksum(checksum, FileUtils.getFileList(FileUtils.getDriveDirectory()))) != null)
                 tempChecksumMap.put(file.getAbsolutePath(), checksum);
         }
 
@@ -116,11 +116,16 @@ public class DataSyncWorker extends Thread {
 
             if (!file.exists()) {
                 // Delete file from master
-                if (!hasChange) {
+                String[] fileInfoArr = ClientManager.getInstance().getCommandClient().send(Constants.REQUEST_FILE_INFO + "|" + tempChecksumMap.get(path)).split("\\|");
+                String fileName = fileInfoArr[0];
+                long fileSize = Long.parseLong(fileInfoArr[1]);
+
+                if (!fileName.equals("null") && !hasChange) {
                     System.out.println("Current time: " + new Date(System.currentTimeMillis()) + ", the following files are going to be synchronized:");
                     hasChange = true;
                 }
-                System.out.println("-" + file.getName() + " going to be deleted to the master");
+                if (!fileName.equals("null"))
+                    System.out.println("-" + file.getName() + " going to be deleted to the master. Size: " + fileSize);
             }
         }
 
@@ -140,7 +145,7 @@ public class DataSyncWorker extends Thread {
                 ClientManager.getInstance().getDataClient().requestFile(checksum);
             }
             File file;
-            if((file = FileUtils.getFileWithChecksum(checksum, FileUtils.getFileList(FileUtils.getDriveDirectory()))) != null)
+            if ((file = FileUtils.getFileWithChecksum(checksum, FileUtils.getFileList(FileUtils.getDriveDirectory()))) != null)
                 checksumMap.put(file.getAbsolutePath(), checksum);
         }
 
