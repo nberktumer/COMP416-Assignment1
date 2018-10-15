@@ -120,7 +120,7 @@ public class DataSyncWorker extends Thread {
                     System.out.println("Current time: " + new Date(System.currentTimeMillis()) + ", the following files are going to be synchronized:");
                     hasChange = true;
                 }
-                System.out.println("-" + file.getName() + " going to be deleted to the master. Size: " + file.length());
+                System.out.println("-" + file.getName() + " going to be deleted to the master");
             }
         }
 
