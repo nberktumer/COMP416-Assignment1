@@ -22,10 +22,21 @@ public class FileUtils {
         return System.getProperty("user.home") + "/Desktop";
     }
 
+    /**
+     * Returns the drive directory
+     *
+     * @return Drive directory
+     */
     public static String getDriveDirectory() {
         return getDesktopDirectory() + "/" + Constants.SYNC_FOLDER_NAME;
     }
 
+    /**
+     * Returns a list of files in the given path
+     *
+     * @param path Folder path
+     * @return list of files
+     */
     public static File[] getFileList(String path) {
         File dir = new File(path);
         return dir.listFiles();
@@ -42,6 +53,13 @@ public class FileUtils {
             dir.mkdir();
     }
 
+    /**
+     * Returns the file with the given checksum in the given file list
+     *
+     * @param checksum File to be found
+     * @param list     List of files that will be searched
+     * @return File with the given checksum
+     */
     public static File getFileWithChecksum(String checksum, File[] list) {
         for (File file : list)
             if (MD5checksum(file).equals(checksum))
@@ -49,14 +67,26 @@ public class FileUtils {
         return null;
     }
 
+    /**
+     * Returns a list of checksum of the given files
+     *
+     * @param list File list
+     * @return List of checksum
+     */
     public static List<String> getChecksumList(File[] list) {
         List<String> result = new ArrayList<>();
-        for(File file: list) {
+        for (File file : list) {
             result.add(MD5checksum(file));
         }
         return result;
     }
 
+    /**
+     * Returns the MD5 checksum value of the given file
+     *
+     * @param input File
+     * @return MD5 checksum value
+     */
     public static String MD5checksum(File input) {
         try (InputStream inputStream = new FileInputStream(input)) {
             MessageDigest digest = MessageDigest.getInstance("MD5");
@@ -72,6 +102,11 @@ public class FileUtils {
         return null;
     }
 
+    /**
+     * Returns the drive folder. If the DEBUG_MODE is TRUE, then it returns a folder with "-debug" suffix. Otherwise returns the original drive folder
+     *
+     * @return Drive folder
+     */
     public static String getDebugDriveDirectory() {
         if (Constants.DEBUG_MODE)
             return getDesktopDirectory() + "/" + Constants.SYNC_FOLDER_NAME + "-debug";

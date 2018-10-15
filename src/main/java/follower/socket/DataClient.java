@@ -5,7 +5,6 @@ import follower.ClientManager;
 import util.FileUtils;
 
 import java.io.*;
-import java.util.Collections;
 
 public class DataClient extends Client {
 
@@ -13,15 +12,21 @@ public class DataClient extends Client {
         super(address, port);
     }
 
+    /**
+     * Downloads the file with the given checksum from the master
+     *
+     * @param fileChecksum Checksum of the file that will be downloaded
+     * @return Downloaded file
+     */
     public File requestFile(String fileChecksum) {
         try {
             String[] fileInfoArr = ClientManager.getInstance().getCommandClient().send(Constants.REQUEST_FILE_INFO + "|" + fileChecksum).split("\\|");
             String fileName = fileInfoArr[0];
             long fileLength = Long.parseLong(fileInfoArr[1]);
-            if(fileName.equals(Constants.ERROR))
+            if (fileName.equals(Constants.ERROR))
                 return null;
 
-            System.out.println("DataClient: " + fileName + " will be downloaded from the master");
+            System.out.println("Downloading " + fileName);
 
             boolean isReceived = false;
             do {
@@ -31,19 +36,19 @@ public class DataClient extends Client {
                 final BufferedInputStream inputFileStream = new BufferedInputStream(getSocket().getInputStream());
                 BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(new File(FileUtils.getDriveDirectory(), fileName)));
 
-                for(int i = 0; i < fileLength; i++)
+                for (int i = 0; i < fileLength; i++)
                     bufferedOutputStream.write(inputFileStream.read());
 
                 bufferedOutputStream.close();
 
-                System.out.println("DataClient: "+fileName+" is downloaded at " + System.currentTimeMillis());
+                System.out.println("Download completed for " + fileName);
 
                 File receivedFile = new File(FileUtils.getDriveDirectory(), fileName);
                 if (receivedFile.exists() && FileUtils.MD5checksum(receivedFile).equals(fileChecksum)) {
-                    System.out.println("Successfully received the file");
+                    System.out.println("Consistency check for " + fileName + " passed");
                     isReceived = true;
                 } else {
-                    System.out.println("Checksums do not match.");
+                    System.out.println("Retransmit request for file " + fileName);
                     Thread.sleep(Constants.RETRY_INTERVAL);
                     receivedFile.delete();
                 }
@@ -55,13 +60,17 @@ public class DataClient extends Client {
         return null;
     }
 
+    /**
+     * Uploads the given file to the server
+     *
+     * @param file File to be uploaded
+     * @return Result of the upload process
+     */
     public boolean transfer(File file) {
         try {
             String result;
-            int counter = 0;
             do {
-                if(counter > Constants.NUM_TRIALS)
-                    throw new Exception();
+                System.out.println("Uploading " + file.getName());
 
                 ClientManager.getInstance().getCommandClient().send(Constants.NEW_FILE + "|" + file.getName() + "|" + FileUtils.MD5checksum(file) + "|" + file.length());
 
@@ -69,7 +78,7 @@ public class DataClient extends Client {
                 final BufferedInputStream inputFileStream = new BufferedInputStream(new FileInputStream(file));
 
                 int data;
-                while((data = inputFileStream.read()) != -1)
+                while ((data = inputFileStream.read()) != -1)
                     outputFileStream.write(data);
 
                 inputFileStream.close();
@@ -77,14 +86,13 @@ public class DataClient extends Client {
 
                 result = getInputStream().readLine();
 
-                System.out.println("Client: File sent at " + System.currentTimeMillis());
-                counter++;
+                System.out.println("Upload completed for " + file.getName());
             } while (!result.equals(Constants.SUCCESS));
 
             return true;
         } catch (Exception e) {
             e.printStackTrace();
-            System.err.println("DataClient: An error occurred while uploading " + file.getName() + " file.");
+            System.err.println("An error occurred while uploading " + file.getName());
             return false;
         }
     }

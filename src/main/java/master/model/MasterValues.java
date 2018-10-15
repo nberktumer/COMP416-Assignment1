@@ -11,19 +11,25 @@ import java.util.Map;
 public class MasterValues {
 
     private MasterValues() {
-
     }
 
     private static Map<InetAddress, ThreadContainer> threadContainerMap = Collections.synchronizedMap(new HashMap<>());
 
+    /**
+     * Returns the threadContainerMap
+     *
+     * @return threadContainerMap
+     */
     public static Map<InetAddress, ThreadContainer> getThreadContainerMap() {
         return threadContainerMap;
     }
 
-    public static void setThreadContainerMap(Map<InetAddress, ThreadContainer> threadContainerMap) {
-        MasterValues.threadContainerMap = threadContainerMap;
-    }
-
+    /**
+     * Inserts a new DataServerThread to the given IP address
+     *
+     * @param inetAddress      IP address
+     * @param dataServerThread DataServerThread to be inserted
+     */
     public static synchronized void addDataThread(InetAddress inetAddress, DataServerThread dataServerThread) {
         if (threadContainerMap.containsKey(inetAddress)) {
             threadContainerMap.get(inetAddress).setDataServerThread(dataServerThread);
@@ -32,9 +38,14 @@ public class MasterValues {
             threadContainer.setDataServerThread(dataServerThread);
             threadContainerMap.put(inetAddress, threadContainer);
         }
-
     }
 
+    /**
+     * Inserts a new CommandServerThread to the given IP address
+     *
+     * @param inetAddress         IP address
+     * @param commandServerThread CommandServerThread to be inserted
+     */
     public static synchronized void addCommandThread(InetAddress inetAddress, CommandServerThread commandServerThread) {
         if (threadContainerMap.containsKey(inetAddress)) {
             threadContainerMap.get(inetAddress).setCommandServerThread(commandServerThread);
@@ -43,6 +54,5 @@ public class MasterValues {
             threadContainer.setCommandServerThread(commandServerThread);
             threadContainerMap.put(inetAddress, threadContainer);
         }
-
     }
 }

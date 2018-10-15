@@ -9,7 +9,7 @@ import java.net.Socket;
 
 public class DataServerThread extends ServerThread {
     /**
-     * Creates a server thread on the input socket
+     * Creates a data server thread on the input socket
      *
      * @param socket input socket to create a thread on
      */
@@ -18,8 +18,7 @@ public class DataServerThread extends ServerThread {
     }
 
     /**
-     * The server thread, echos the client until it receives the QUIT string from
-     * the client
+     * DataServerThread listens for new files requests and uploads/downloads them to/from the follower
      */
     @Override
     public void run() {
@@ -43,9 +42,7 @@ public class DataServerThread extends ServerThread {
                 String checksum = commandServerThread.fileCheckSum;
                 long fileLength = commandServerThread.fileLength;
 
-                System.out.println("DataServerThread: " + fileName);
-                System.out.println("DataServerThread: " + checksum);
-                System.out.println("DataServerThread: " + fileLength);
+                //System.out.println("Downloading " + fileName);
 
                 final BufferedInputStream inputFileStream = new BufferedInputStream(getSocket().getInputStream());
                 BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(new File(FileUtils.getDebugDriveDirectory(), fileName)));
@@ -55,16 +52,15 @@ public class DataServerThread extends ServerThread {
 
                 bufferedOutputStream.close();
 
-                System.out.println("DataServerThread: File transfer completed at " + System.currentTimeMillis());
+                //System.out.println("Download completed for " + fileName);
 
                 File receivedFile = new File(FileUtils.getDebugDriveDirectory(), fileName);
-                System.out.println("DataServerThread: File Name: " + fileName + ", Checksum: " + FileUtils.MD5checksum(receivedFile) + ", Received Checksum: " + checksum);
                 if (receivedFile.exists() && FileUtils.MD5checksum(receivedFile).equals(checksum)) {
                     getOutputStream().println(Constants.SUCCESS);
-                    System.out.println("Successfully received the file");
+                    //System.out.println("Consistency check for " + fileName + " passed");
                 } else {
                     getOutputStream().println(Constants.ERROR);
-                    System.out.println("Checksum does not match.");
+                    //System.out.println("Retransmit request for file " + fileName);
                     receivedFile.delete();
                 }
                 getOutputStream().flush();
@@ -72,13 +68,8 @@ public class DataServerThread extends ServerThread {
                 commandServerThread.fileCheckSum = null;
                 commandServerThread.fileLength = 0L;
             }
-
-        } catch (IOException e) {
-            String line = this.getName();
-            System.err.println("DataServerThread: Run. IO Error/ Client " + line + " terminated abruptly");
-        } catch (NullPointerException | InterruptedException e) {
-            String line = this.getName();
-            System.err.println("DataServerThread: Run.Client " + line + " Closed");
+        } catch (IOException | NullPointerException | InterruptedException e) {
+            System.err.println("DataServerThread: " + getName() + " has been disconnected.");
         }
     }
 }

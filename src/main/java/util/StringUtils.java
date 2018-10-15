@@ -4,6 +4,12 @@ public class StringUtils {
     private StringUtils() {
     }
 
+    /**
+     * Converts byte array into string
+     *
+     * @param arr Byte array to be converted to string
+     * @return String value of the given byte array
+     */
     public static String byteArrayToString(byte[] arr) {
         StringBuilder stringBuilder = new StringBuilder();
 

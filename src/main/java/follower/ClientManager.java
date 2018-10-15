@@ -10,6 +10,9 @@ public class ClientManager {
     private ClientManager() {
     }
 
+    /**
+     * A helper class for thread-safe singleton
+     */
     private static class SingletonHelper {
         private static final ClientManager INSTANCE = new ClientManager();
     }
@@ -56,6 +59,9 @@ public class ClientManager {
         return dataClient;
     }
 
+    /**
+     * Disconnects from the command server and the data server
+     */
     public void disconnectAll() {
         commandClient.disconnect();
         dataClient.disconnect();

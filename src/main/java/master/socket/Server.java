@@ -23,10 +23,15 @@ public class Server extends Thread {
         try {
             this.serverThread = serverThreadClass;
             this.serverSocket = new ServerSocket(port);
-            System.out.println("Opened up a server socket on " + Inet4Address.getLocalHost());
+
+            if (serverThread.getName().equals(DataServerThread.class.getName())) {
+                System.out.println("Data server started on " + Inet4Address.getLocalHost());
+            } else if (serverThread.getName().equals(CommandServerThread.class.getName())) {
+                System.out.println("Command server started on " + Inet4Address.getLocalHost());
+            }
         } catch (IOException e) {
             e.printStackTrace();
-            System.err.println("Server class.Constructor exception on opening a server socket");
+            System.err.println("Server: Constructor exception on opening a server socket");
         }
     }
 
@@ -60,7 +65,7 @@ public class Server extends Thread {
             object.start();
         } catch (Exception e) {
             e.printStackTrace();
-            System.err.println("Server Class.Connection establishment error inside listen and accept function");
+            System.err.println("Server Class: Connection establishment error inside listenConnections function");
         }
     }
 

@@ -14,7 +14,7 @@ public class CommandServerThread extends ServerThread {
     protected long fileLength;
 
     /**
-     * Creates a server thread on the input socket
+     * Creates a command server thread on the input socket
      *
      * @param socket input socket to create a thread on
      */
@@ -23,8 +23,7 @@ public class CommandServerThread extends ServerThread {
     }
 
     /**
-     * The server thread, echos the client until it receives the QUIT string from
-     * the client1
+     * CommandServerThread listens for the requests from the follower
      */
     @Override
     public void run() {
@@ -35,20 +34,13 @@ public class CommandServerThread extends ServerThread {
 
             while ((line = getInputStream().readLine()) != null) {
                 String[] commandArr = line.split("\\|");
-
-                System.out.println(line);
-
                 String command = commandArr[0];
 
-                System.out.println(command);
                 if (command.equals(Constants.NEW_FILE)) {
                     String fileName = commandArr[1];
                     String fileChecksum = commandArr[2];
                     long fileLength = Long.parseLong(commandArr[3]);
 
-                    System.out.println("fileName: " + fileName);
-                    System.out.println("checksum: " + fileChecksum);
-                    System.out.println("length: " + fileLength);
                     this.fileCheckSum = fileChecksum;
                     this.fileName = fileName;
                     this.fileLength = fileLength;
@@ -56,7 +48,7 @@ public class CommandServerThread extends ServerThread {
                     getOutputStream().println(Constants.SUCCESS);
                     getOutputStream().flush();
 
-                    System.out.println("CommandServer: File info received at " + System.currentTimeMillis());
+                    //System.out.println("CommandServer: File info received at " + System.currentTimeMillis());
                 } else if (command.equals(Constants.DELETE_FILE)) {
                     String checksum = commandArr[1];
 
@@ -86,41 +78,28 @@ public class CommandServerThread extends ServerThread {
                     File file = FileUtils.getFileWithChecksum(checksum, FileUtils.getFileList(FileUtils.getDebugDriveDirectory()));
 
                     if (file == null) {
-                        System.out.println("file does not exist!!!");
+                        // File does not exist
                         getOutputStream().println("null");
                         getOutputStream().flush();
                         continue;
                     }
-                    System.out.println(file.getName() + " will be sent. Checsum: " + checksum);
+                    //System.out.println(file.getName() + " will be sent. Checsum: " + checksum);
 
                     OutputStream dataThreadOutputStream = MasterValues.getThreadContainerMap().get(getSocket().getInetAddress()).getDataServerThread().getSocket().getOutputStream();
-                    final BufferedOutputStream outputFileStream = new BufferedOutputStream(dataThreadOutputStream);
+                    final DataOutputStream outputFileStream = new DataOutputStream(new BufferedOutputStream(dataThreadOutputStream));
                     final BufferedInputStream inputFileStream = new BufferedInputStream(new FileInputStream(file));
-                    final byte[] buffer = new byte[Constants.BUFFER_SIZE];
 
-                    for (int read = inputFileStream.read(buffer); read >= 0; read = inputFileStream.read(buffer)) {
-                        outputFileStream.write(buffer, 0, read);
-                    }
+                    int data;
+                    while ((data = inputFileStream.read()) != -1)
+                        outputFileStream.write(data);
 
                     inputFileStream.close();
                     outputFileStream.flush();
-                    System.out.println("Server: File sent at " + System.currentTimeMillis());
+                    //System.out.println("Server: File sent at " + System.currentTimeMillis());
                 }
-
-				/*getOutputStream().println(line);
-				getOutputStream().flush();
-				System.out.println("Server Thread: Client " + getSocket().getRemoteSocketAddress() + " sent : " + line);*/
-
-
             }
-
-        } catch (IOException e) {
-            String line = this.getName();
-            System.err.println("Server Thread: Run. IO Error/ Client " + line + " terminated abruptly");
-        } catch (NullPointerException e) {
-            e.printStackTrace();
-            String line = this.getName();
-            System.err.println("Server Thread:  " + line + " Closed");
+        } catch (IOException | NullPointerException e) {
+            System.err.println("DataServerThread: " + getName() + " has been disconnected.");
         }
     }
 }
